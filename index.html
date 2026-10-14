@@ -19,13 +19,13 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --paper:#14181C; --surface:#1D2329; --ink:#ECEFF1; --muted:#9AA4AE; --line:#343C44;
-    --slab:#232A31; --g2:#C9CED3; --bar:#0E1114; --bar-ink:#ECEFF1; --sB:#5B8FF0; --sA:#EF5350;
+    --slab:#232A31; --g0:#FF6B6B; --g1:#4CD964; --g2:#C9CED3; --bar:#0E1114; --bar-ink:#ECEFF1; --sB:#5B8FF0; --sA:#EF5350;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"]{
   --paper:#14181C; --surface:#1D2329; --ink:#ECEFF1; --muted:#9AA4AE; --line:#343C44;
-  --slab:#232A31; --g2:#C9CED3; --bar:#0E1114; --bar-ink:#ECEFF1; --sB:#5B8FF0; --sA:#EF5350;
+  --slab:#232A31; --g0:#FF6B6B; --g1:#4CD964; --g2:#C9CED3; --bar:#0E1114; --bar-ink:#ECEFF1; --sB:#5B8FF0; --sA:#EF5350;
   color-scheme: dark;
 }
 *{box-sizing:border-box}
@@ -53,6 +53,7 @@ main{flex:1;min-height:0;position:relative}
 .mapwrap{flex:1;min-width:0;min-height:0;position:relative}
 #map{position:absolute;inset:0;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;display:block;cursor:grab}
 #map text{font-family:inherit;pointer-events:none}
+#map text.on{paint-order:stroke;stroke:var(--accent);stroke-linejoin:round;font-weight:800;fill:#1C2126}
 .zoom{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px}
 .zoom button{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:22px;line-height:1;box-shadow:0 1px 2px rgba(0,0,0,.15)}
 .turn{position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--muted);background:var(--surface);padding:3px 8px;border-radius:6px;border:1px solid var(--line)}
@@ -85,6 +86,12 @@ dl.facts dd small{display:block;font-weight:400;font-size:13.5px;color:var(--mut
 .pbody .mini{margin:0}
 dl.facts{grid-template-columns:auto 1fr}
 .warn{background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--warn);border-radius:8px;padding:8px 10px;font-size:14.5px;margin:4px 0 10px}
+.nbr{display:grid;grid-template-columns:auto 1fr auto 1fr auto;align-items:center;gap:6px;margin:2px 0 2px}
+.nbtn{min-width:52px;min-height:42px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--line);background:var(--paper);font-weight:700;font-size:15.5px;padding:0 8px}
+.nbtn.cur{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.nbtn.none{color:var(--muted);font-weight:400}
+.nd{text-align:center;font-weight:700;font-size:15.5px;border-bottom:2px solid var(--line);padding-bottom:2px}
+.nbcap{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin:2px 0 12px}
 .plist{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 .plist button{display:flex;align-items:center;gap:6px;min-height:40px;padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:var(--paper);font-size:14.5px}
 .plist .chip{width:14px;height:14px}
@@ -115,6 +122,7 @@ dl.facts{grid-template-columns:auto 1fr}
 .gtable td:first-child{font-weight:700;width:52px}
 .gtable td:last-child{text-align:right;font-weight:700;font-size:16px}
 .gtable td.sub{color:var(--muted);font-size:14px}
+#gsvg text{paint-order:stroke;stroke:var(--surface);stroke-width:120px;stroke-linejoin:round}
 #gsvg{width:100%;height:auto;display:block;margin-bottom:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
 
 /* ---------- TAB BAR ---------- */
@@ -179,8 +187,17 @@ lbl(7815,-7600,'bina ortası',11,'var(--muted)','middle',600);
 const strX=D.GX.map((g,i)=>el('line',{x1:g,y1:450,x2:g,y2:-7450,stroke:GCOL(i),'stroke-width':1.1,'vector-effect':'non-scaling-stroke',opacity:.8},gStr));
 const strY=D.GY.map((g,i)=>el('line',{x1:-450,y1:-g,x2:16080,y2:-g,stroke:GCOL(i),'stroke-width':1.1,'vector-effect':'non-scaling-stroke',opacity:.8},gStr));
 const labX=[],labY=[];
-D.GX.forEach((g,i)=>{const y=[700,1150,1600][i%3];labX.push({x:g,y});lbl(g,y,'x'+(i+1),12,GCOL(i));});
-D.GY.forEach((g,i)=>{const x=[-650,-1250,-1850][i%3];labY.push({x,y:-g});lbl(x,-g,'y'+(i+1),12,GCOL(i),'end');});
+D.GX.forEach((g,i)=>{const y=[700,1150,1600][i%3];labX.push({x:g,y,e:lbl(g,y,'x'+(i+1),12,GCOL(i))});});
+D.GY.forEach((g,i)=>{const x=[-650,-1250,-1850][i%3];labY.push({x,y:-g,e:lbl(x,-g,'y'+(i+1),12,GCOL(i),'end')});});
+function ext(ax,i,fs){ // ipin uçları: etiketin hemen yanına kadar
+  if(ax==='x'){const l=labX[i];return [D.GX[i],l.y-0.62*fs,D.GX[i],-7450];}
+  const l=labY[i];return [l.x+0.3*fs,-D.GY[i],16080,-D.GY[i]];
+}
+function setLine(e,a){e.setAttribute('x1',a[0]);e.setAttribute('y1',a[1]);e.setAttribute('x2',a[2]);e.setAttribute('y2',a[3]);}
+function labOn(set){ // set: null = hepsi normal
+  labX.concat(labY).forEach((l,j)=>{const key=(j<labX.length?'x':'y')+(j<labX.length?j:j-labX.length);
+    const on=set&&set.has(key); l.e.classList.toggle('on',!!on); l.e.style.opacity=set&&!on?'.4':'';});
+}
 // A ve B
 [[0,0,'A','var(--sA)','end',-260],[X,0,'B','var(--sB)','start',260]].forEach(([x,y,n,c,a,dx])=>{lbl(x+dx,y+330,n,15,c,a,800);});
 const plates=D.P.map((p,i)=>{
@@ -203,7 +220,11 @@ function render(){
   svg.setAttribute('viewBox',`${view.ox} ${view.oy} ${w/view.s} ${h/view.s}`);
   const k=1/view.s;
   const lf=view.s<0.03?0.8:1;
-  scaled.forEach(o=>o.e.setAttribute('font-size',o.px*k*lf));
+  scaled.forEach(o=>o.e.setAttribute('font-size',o.px*k*lf*(o.e.classList.contains('on')?1.25:1)));
+  const fs=12*k*lf;
+  strX.forEach((e,i)=>setLine(e,ext('x',i,fs))); strY.forEach((e,i)=>setLine(e,ext('y',i,fs)));
+  hiLines.forEach(h=>h.els.forEach(e=>setLine(e,ext(h.ax,h.i,fs))));
+  labX.concat(labY).forEach(l=>{if(l.e.classList.contains('on')) l.e.setAttribute('stroke-width',7*k); else l.e.removeAttribute('stroke-width');});
   const showPl=view.s>0.045;
   plates.forEach((pl,i)=>{
     pl.t.style.display=showPl?'':'none';
@@ -212,7 +233,7 @@ function render(){
   });
   hiScale.forEach(o=>o.e.setAttribute(o.attr,o.px*k));
 }
-const hiScale=[];
+const hiScale=[], hiLines=[];
 function fit(){
   const {w,h}=size(); const bx=-3300,by=-8000,bw=20300,bh=9900;
   view.s=Math.min(w/bw,h/bh); view.ox=bx-(w/view.s-bw)/2; view.oy=by-(h/view.s-bh)/2; render();
@@ -271,8 +292,8 @@ function tapAt(sx,sy){
   if(lb && tol(lb.d)<22){ selectString(lb.ax,lb.i); return; }
   // ip
   let sb=null;
-  if(y>-450&&y<7450) D.GX.forEach((g,i)=>{const d=Math.abs(g-x); if(!sb||d<sb.d) sb={d,ax:'x',i};});
-  if(x>-450&&x<16080) D.GY.forEach((g,i)=>{const d=Math.abs(g-y); if(!sb||d<sb.d) sb={d,ax:'y',i};});
+  if(y>-2000&&y<7450) D.GX.forEach((g,i)=>{const d=Math.abs(g-x); if(!sb||d<sb.d) sb={d,ax:'x',i};});
+  if(x>-2600&&x<16080) D.GY.forEach((g,i)=>{const d=Math.abs(g-y); if(!sb||d<sb.d) sb={d,ax:'y',i};});
   if(sb && tol(sb.d)<14){ selectString(sb.ax,sb.i); return; }
   clearSel();
 }
@@ -280,14 +301,12 @@ function tapAt(sx,sy){
 /* ---------- seçim ---------- */
 const panel=$('#panel');
 function hint(){panel.className='panel empty';panel.innerHTML='<p class="hint"><b>Bir plakaya</b> dokunun: ölçüleri ve oturan köşe. <b>Bir ipe</b> dokunun: o ipe oturan plakalar. İki parmakla yakınlaştırın.</p>';}
-function clearHi(){gHi.innerHTML='';gTop.innerHTML='';hiScale.length=0;plates.forEach(pl=>{pl.g.style.opacity='';});strX.concat(strY).forEach(s=>s.style.opacity='');}
+function clearHi(){gHi.innerHTML='';gTop.innerHTML='';hiScale.length=0;hiLines.length=0;labOn(null);plates.forEach(pl=>{pl.g.style.opacity='';});strX.concat(strY).forEach(s=>s.style.opacity='');}
 function clearSel(){selection=null;clearHi();hint();render();}
-function hiLine(x1,y1,x2,y2){
-  el('line',{x1,y1,x2,y2,stroke:'var(--ink)','stroke-width':6,'vector-effect':'non-scaling-stroke','stroke-linecap':'round'},gHi);
-  el('line',{x1,y1,x2,y2,stroke:'var(--accent)','stroke-width':3.5,'vector-effect':'non-scaling-stroke','stroke-linecap':'round'},gHi);
-}
 function hiString(ax,i){
-  if(ax==='x'){const g=D.GX[i];hiLine(g,450,g,-7450);} else {const g=D.GY[i];hiLine(-450,-g,16080,-g);}
+  const a=el('line',{stroke:'var(--ink)','stroke-width':6,'vector-effect':'non-scaling-stroke','stroke-linecap':'round'},gHi);
+  const b=el('line',{stroke:'var(--accent)','stroke-width':3.5,'vector-effect':'non-scaling-stroke','stroke-linecap':'round'},gHi);
+  hiLines.push({ax,i,els:[a,b]});
 }
 function dimOthers(keep){plates.forEach((pl,i)=>pl.g.style.opacity=keep.has(i)?'':'.3');strX.concat(strY).forEach(s=>s.style.opacity='.35');}
 function closeBtn(){return '<button class="close" aria-label="Kapat" onclick="clearSel()">×</button>';}
@@ -310,7 +329,7 @@ function plateMini(p,big){
 function selectPlate(i,zoom){
   selection={kind:'plate',i}; clearHi();
   const p=D.P[i], pl=plates[i];
-  hiString('x',p.xi); hiString('y',p.yi);
+  hiString('x',p.xi); hiString('y',p.yi); labOn(new Set(['x'+p.xi,'y'+p.yi]));
   const ox=p.s==='L'?0:X;
   el('line',{x1:ox,y1:0,x2:pl.rx,y2:-pl.ry,stroke:p.s==='L'?'var(--sA)':'var(--sB)','stroke-width':2.5,'stroke-dasharray':'7 5','vector-effect':'non-scaling-stroke'},gTop);
   const c=el('circle',{cx:ox,cy:0,r:60,fill:p.s==='L'?'var(--sA)':'var(--sB)'},gTop); hiScale.push({e:c,attr:'r',px:7});
@@ -331,14 +350,21 @@ function selectPlate(i,zoom){
   if(zoom){const b=pl.bb; centerOn((b.x0+b.x1)/2,-(b.y0+b.y1)/2,Math.max(view.s,0.09));} else render();
 }
 function selectString(ax,i){
-  selection={kind:'string',ax,i}; clearHi(); hiString(ax,i);
+  selection={kind:'string',ax,i}; clearHi(); hiString(ax,i); labOn(new Set([ax+i]));
   const on=D.P.map((p,k)=>[p,k]).filter(([p])=>ax==='x'?p.xi===i:p.yi===i);
   dimOthers(new Set(on.map(o=>o[1])));
   const G=ax==='x'?D.GXr:D.GYr; const raw=ax==='x'?D.GX:D.GY;
-  const near=[];[i-1,i+1].forEach(j=>{if(j>=0&&j<G.length){const d=Math.abs(raw[j]-raw[i]);if(d<60)near.push(`${ax}${j+1} ipi sadece ${Math.round(d)} mm yanında. Çivi etiketine bakın.`);}});
+  const nearIds=[i-1,i+1].filter(j=>j>=0&&j<G.length&&Math.abs(G[j]-G[i])<60).map(j=>ax+(j+1));
+  const near=nearIds.length?[`Dikkat: ${nearIds.join(' ve ')} çok yakın. Çivi etiketine bakın.`]:[];
+  const nb=j=>j>=0&&j<G.length?`<button class="nbtn" onclick="selectString('${ax}',${j})">${ax}${j+1}</button>`:'<span class="nbtn none">—</span>';
+  const dist=j=>j>=0&&j<G.length?`<span class="nd num">${Math.abs(G[i]-G[j])} mm</span>`:'<span class="nd"></span>';
+  const strip=`<div class="nbr">${nb(i-1)}${dist(i-1)}<span class="nbtn cur">${ax}${i+1}</span>${dist(i+1)}${nb(i+1)}</div>`+
+    `<div class="nbcap"><span>${ax==='x'?'← solundaki':'↓ altındaki'}</span><span>${ax==='x'?'sağındaki →':'üstündeki ↑'}</span></div>`;
   panel.className='panel';
   panel.innerHTML=closeBtn()+
-   `<div class="ptitle"><span class="chip" style="background:${GCOL(i)};border-radius:50%"></span><h2>${ax}${i+1} ipi<small>${ax}1'den ${fmt(G[i])} mm</small></h2></div>`+
+   `<div class="ptitle"><span class="chip" style="background:${GCOL(i)};border-radius:50%"></span><h2>${ax}${i+1} ipi</h2></div>`+
+   `<dl class="facts num"><dt>Referans ${ax}1 ipinden</dt><dd><span class="big">${fmt(G[i])} mm</span></dd></dl>`+
+   `<p class="hint" style="margin:0 0 4px">Yanındaki iplere uzaklık:</p>`+strip+
    near.map(n=>`<div class="warn">${n}</div>`).join('')+
    `<p class="hint" style="margin-bottom:4px">Bu ipe oturan plakalar (${on.length}):</p><div class="plist">`+
    on.map(([p,k])=>`<button onclick="selectPlate(${k},true)"><span class="chip" style="background:${TCOL(p.t)}"></span><b>${p.t}</b> ${ax==='x'?'y'+(p.yi+1):'x'+(p.xi+1)}</button>`).join('')+'</div>';
@@ -378,16 +404,20 @@ function buildTypes(){
 /* ---------- GÖNYE ---------- */
 function buildGonye(){
   const F=D.F, XM=D.GX[15];
-  let s=`<svg id="gsvg" viewBox="-1500 -8500 18700 10000" aria-label="Dış çerçeve ve çaprazlar">`;
+  let s=`<svg id="gsvg" viewBox="-1500 -9300 18700 10800" aria-label="Dış çerçeve ve çaprazlar">`;
   D.GX.forEach(g=>s+=`<line x1="${g}" y1="250" x2="${g}" y2="${-Y-250}" stroke="var(--line)" stroke-width="18"/>`);
   D.GY.forEach(g=>s+=`<line x1="-250" y1="${-g}" x2="${X+250}" y2="${-g}" stroke="var(--line)" stroke-width="18"/>`);
   s+=`<rect x="0" y="${-Y}" width="${X}" height="${Y}" fill="none" stroke="currentColor" stroke-width="55"/>`;
   s+=`<line x1="${XM}" y1="300" x2="${XM}" y2="${-Y-300}" stroke="currentColor" stroke-width="35" stroke-dasharray="160 100"/>`;
+  s+=`<line x1="0" y1="0" x2="${XM}" y2="${-Y}" stroke="#2CA02C" stroke-width="40" stroke-dasharray="220 120"/><line x1="0" y1="${-Y}" x2="${XM}" y2="0" stroke="#2CA02C" stroke-width="40" stroke-dasharray="220 120"/>`;
+  s+=`<line x1="${XM}" y1="0" x2="${X}" y2="${-Y}" stroke="#9467BD" stroke-width="40" stroke-dasharray="220 120"/><line x1="${XM}" y1="${-Y}" x2="${X}" y2="0" stroke="#9467BD" stroke-width="40" stroke-dasharray="220 120"/>`;
   s+=`<line x1="0" y1="0" x2="${X}" y2="${-Y}" stroke="var(--sA)" stroke-width="60"/><line x1="${X}" y1="0" x2="0" y2="${-Y}" stroke="var(--sB)" stroke-width="60"/>`;
   [[0,0,'A',-350,500],[X,0,'B',350,500],[X,-Y,'C',350,-250],[0,-Y,'D',-350,-250],[XM,0,'E',0,650],[XM,-Y,'F',0,-350]].forEach(([x,y,n,dx,dy])=>{
     s+=`<circle cx="${x}" cy="${y}" r="150" fill="#000" stroke="var(--accent)" stroke-width="40"/><text x="${x+dx}" y="${y+dy}" font-size="760" font-weight="800" fill="currentColor" text-anchor="middle">${n}</text>`;});
   s+=`<text x="${X*0.27}" y="${-Y*0.27-180}" font-size="640" font-weight="700" fill="var(--sA)" text-anchor="middle" transform="rotate(-24 ${X*0.27} ${-Y*0.27-180})">AC ${fmt(F.AC)}</text>`;
   s+=`<text x="${X*0.73}" y="${-Y*0.27-180}" font-size="640" font-weight="700" fill="var(--sB)" text-anchor="middle" transform="rotate(24 ${X*0.73} ${-Y*0.27-180})">BD ${fmt(F.AC)}</text>`;
+  s+=`<text x="${XM/2}" y="${-Y-1050}" font-size="560" font-weight="700" fill="#2CA02C" text-anchor="middle">AF = DE = ${fmt(F.AF)}</text>`;
+  s+=`<text x="${XM+(X-XM)/2}" y="${-Y-1050}" font-size="560" font-weight="700" fill="#9467BD" text-anchor="middle">EC = BF = ${fmt(F.EC)}</text>`;
   s+='</svg>';
   const T=(title,rows)=>`<table class="gtable num"><tr><th colspan="3">${title}</th></tr>`+rows.map(r=>`<tr><td>${r[0]}</td><td class="sub">${r[1]}</td><td>${fmt(r[2])}</td></tr>`).join('')+'</table>';
   let h='<p class="lead">Diğer iplere geçmeden önce dış çerçeve (x1, x31, y1, y18) ve orta aks (x16) kontrol edilir. Ölçüler mm, ip kesişimleri arası.</p>'+s+
@@ -426,6 +456,7 @@ src="https://c.statcounter.com/13359849/0/a7617122/1/"
 alt="Web Analytics"
 referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
 <!-- End of Statcounter Code -->
+
   
 </body>
 </html>
